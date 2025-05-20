@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cuestionario de Física</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 20px;
+    background: #f0f2f5;
+    color: #333;
+  }
+  header {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  nav button {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #1976d2;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+  }
+  nav button:hover {
+    background-color: #115293;
+  }
+  section {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 7px rgba(0,0,0,0.1);
+  }
+  #cuestionario div.pregunta {
+    margin-bottom: 15px;
+  }
+  #cuestionario label {
+    display: block;
+    margin: 5px 0;
+    cursor: pointer;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0 15px 0;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+  button {
+    background-color: #1976d2;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #115293;
+  }
+  .hidden {
+    display: none;
+  }
+  ul {
+    padding-left: 20px;
+  }
+  ul li {
+    margin-bottom: 8px;
+  }
+
+  /* Responsivo */
+  @media (max-width: 768px) {
+    body {
+      padding: 10px;
+    }
+    nav {
+      flex-direction: column;
+      gap: 10px;
+    }
+    nav button {
+      width: 100%;
+      font-size: 1.1rem;
+    }
+    section {
+      padding: 15px;
+      width: 95%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Cuestionario de Física</h1>
+</header>
+
+<nav>
+  <button id="btnInicio">Inicio</button>
+  <button id="btnAdmin">Panel Administrativo</button>
+  <button id="btnReporte">Informe de Resultados</button>
+</nav>
+
+<!-- INICIO - formulario de documento y cuestionario -->
+<section id="inicioSection">
+  <div id="loginForm">
+    <label for="docInput">Ingrese su número de documento:</label>
+    <input type="text" id="docInput" placeholder="Documento" />
+    <button id="btnIniciarCuestionario">Iniciar Cuestionario</button>
+  </div>
+
+  <form id="cuestionario" class="hidden">
+    <div id="contenedorPreguntas"></div>
+    <button type="submit">Enviar respuestas</button>
+  </form>
+
+  <section id="resultado" class="hidden">
+    <h2>Resultado</h2>
+    <p id="notaFinal"></p>
+    <div id="respuestasCorrectas"></div>
+    <button id="btnReiniciar">Volver a inicio</button>
+  </section>
+</section>
+
+<!-- ADMINISTRACION -->
+<section id="adminSection" class="hidden">
+  <div id="passwordPromptAdmin">
+    <label for="adminPassword">Ingrese contraseña admin:</label>
+    <input type="password" id="adminPassword" />
+    <button id="btnVerificarAdmin">Acceder</button>
+  </div>
+  <div id="adminPanel" class="hidden">
+    <h2>Panel Administrativo</h2>
+    <ul id="listaIntentos"></ul>
+    <button id="btnCerrarAdmin">Cerrar Panel</button>
+  </div>
+</section>
+
+<!-- REPORTE -->
+<section id="reporteSection" class="hidden">
+  <div id="passwordPromptReporte">
+    <label for="reportePassword">Ingrese contraseña para ver reporte:</label>
+    <input type="password" id="reportePassword" />
+    <button id="btnVerificarReporte">Ver Reporte</button>
+  </div>
+  <div id="reporteResultados" class="hidden">
+    <h2>Informe de Resultados</h2>
+    <ul id="listaReporte"></ul>
+    <button id="btnCerrarReporte">Cerrar Informe</button>
+  </div>
+</section>
+
+<script>
+(() => {
+  // Preguntas - formato: {pregunta, opciones: [A,B,C], correcta: letra}
+  const preguntasTotales = [
+    {p: "¿Cuál es la fórmula del período de un péndulo simple de longitud L?", o:["T = 2π √(L/g)", "T = L/g", "T = 2π √(Lg)"], c: "A"},
+    {p: "¿Qué indica la Ley de Hooke en un resorte elástico?", o:["F = ma", "F = -kx", "F = kx²"], c: "B"},
+    {p: "¿Cuál es la fórmula para calcular la fuerza gravitacional entre dos masas m1 y m2?", o:["F = G * (m1 * m2) / r²", "F = (m1 + m2) / r²", "F = G * m1 * m2 * r²"], c: "A"},
+    {p: "¿Qué ocurre cuando un objeto vibra con la misma frecuencia natural de otro objeto cercano?", o:["Se destruye el objeto", "Ocurre absorción total", "Ocurre resonancia"], c: "C"},
+    {p: "¿Qué tipo de onda necesita un medio material para propagarse?", o:["Ondas electromagnéticas", "Ondas mecánicas", "Ondas de radio"], c: "B"},
+    {p: "¿Qué fenómeno se observa cuando dos ondas se cruzan en una cubeta de ondas?", o:["Reflexión", "Refracción", "Interferencia"], c: "C"},
+    {p: "¿Qué describe el efecto Doppler?", o:["El cambio de frecuencia debido al movimiento relativo entre fuente y observador", "La amplitud de una onda electromagnética", "El eco en una onda sonora"], c: "A"},
+    {p: "¿Cuál es la fórmula para la velocidad del sonido en un medio?", o:["v = f * λ", "v = m * a", "v = λ / f"], c: "A"},
+    {p: "¿Qué característica tienen las ondas electromagnéticas en cuanto a su propagación?", o:["Solo viajan en agua", "No necesitan un medio material", "Solo se propagan por el aire"], c: "B"},
+    {p: "¿Cómo afecta la masa del péndulo al período de oscilación?", o:["A mayor masa, mayor período", "A menor masa, menor período", "La masa no afecta el período"], c: "C"},
+    {p: "¿Cuál es la fórmula de la energía potencial elástica almacenada en un resorte?", o:["U = 1/2 kx²", "U = kx", "U = k / 2x"], c: "A"},
+    {p: "¿Qué ocurre con la fuerza gravitacional si se duplica la distancia entre las masas?", o:["Se duplica", "Se reduce a la mitad", "Se reduce a la cuarta parte"], c: "C"},
+    {p: "¿Cuál de los siguientes es un ejemplo de resonancia?", o:["Una cuerda vibrando cuando otra similar vibra cerca", "Rebote de una pelota", "Reflexión de una onda de sonido"], c: "A"},
+    {p: "Si aumenta la frecuencia de una onda, ¿qué ocurre con su longitud de onda (λ), manteniendo constante la velocidad?", o:["Aumenta", "Disminuye", "Permanece igual"], c: "B"},
+    {p: "¿Qué propiedad del sonido se relaciona con su intensidad?", o:["Frecuencia", "Amplitud", "Longitud de onda"], c: "B"},
+  ];
+
+  // ELEMENTOS DOM
+  const secciones = {
+    inicio: document.getElementById("inicioSection"),
+    admin: document.getElementById("adminSection"),
+    reporte: document.getElementById("reporteSection"),
+  };
+
+  const btnInicio = document.getElementById("btnInicio");
+  const btnAdmin = document.getElementById("btnAdmin");
+  const btnReporte = document.getElementById("btnReporte");
+
+  // Inicio
+  const docInput = document.getElementById("docInput");
+  const btnIniciar = document.getElementById("btnIniciarCuestionario");
+  const cuestionarioForm = document.getElementById("cuestionario");
+  const contenedorPreguntas = document.getElementById("contenedorPreguntas");
+
+  // Resultado
+  const resultadoSection = document.getElementById("resultado");
+  const notaFinalP = document.getElementById("notaFinal");
+  const respuestasCorrectasDiv = document.getElementById("respuestasCorrectas");
+  const btnReiniciar = document.getElementById("btnReiniciar");
+
+  // Admin
+  const passwordPromptAdmin = document.getElementById("passwordPromptAdmin");
+  const adminPanel = document.getElementById("adminPanel");
+  const adminPasswordInput = document.getElementById("adminPassword");
+  const btnVerificarAdmin = document.getElementById("btnVerificarAdmin");
+  const listaIntentos = document.getElementById("listaIntentos");
+  const btnCerrarAdmin = document.getElementById("btnCerrarAdmin");
+
+  // Reporte
+  const passwordPromptReporte = document.getElementById("passwordPromptReporte");
+  const reporteResultados = document.getElementById("reporteResultados");
+  const reportePasswordInput = document.getElementById("reportePassword");
+  const btnVerificarReporte = document.getElementById("btnVerificarReporte");
+  const listaReporte = document.getElementById("listaReporte");
+  const btnCerrarReporte = document.getElementById("btnCerrarReporte");
+
+  // Variables
+  let preguntasSeleccionadas = [];
+  let documentoActual = "";
+
+  // --- Manejo de localStorage ---
+
+  function cargarIntentos() {
+    return JSON.parse(localStorage.getItem("intentos") || "[]");
+  }
+  function guardarIntentos(intentos) {
+    localStorage.setItem("intentos", JSON.stringify(intentos));
+  }
+  function cargarDocumentos() {
+    return JSON.parse(localStorage.getItem("docsRealizados") || "[]");
+  }
+  function guardarDocumentos(docs) {
+    localStorage.setItem("docsRealizados", JSON.stringify(docs));
+  }
+
+  // --- Mostrar solo una sección ---
+  function mostrarSeccion(seccion) {
+    Object.values(secciones).forEach(sec => sec.classList.add("hidden"));
+    seccion.classList.remove("hidden");
+
+    // Reset passwords inputs and panels on hide
+    if(seccion !== secciones.admin){
+      passwordPromptAdmin.classList.remove("hidden");
+      adminPanel.classList.add("hidden");
+      adminPasswordInput.value = "";
+    }
+    if(seccion !== secciones.reporte){
+      passwordPromptReporte.classList.remove("hidden");
+      reporteResultados.classList.add("hidden");
+      reportePasswordInput.value = "";
+    }
+    // Reset cuestionario y resultado al cambiar a inicio
+    if(seccion === secciones.inicio){
+      cuestionarioForm.classList.add("hidden");
+      resultadoSection.classList.add("hidden");
+      docInput.value = "";
+    }
+  }
+
+  // --- Cuestionario ---
+  // Elegir 5 preguntas aleatorias sin repetir
+  function elegirPreguntas() {
+    let preguntas = [...preguntasTotales];
+    let seleccionadas = [];
+    for(let i=0; i<5; i++){
+      const idx = Math.floor(Math.random()*preguntas.length);
+      seleccionadas.push(preguntas.splice(idx,1)[0]);
+    }
+    return seleccionadas;
+  }
+
+  function mostrarPreguntas() {
+    contenedorPreguntas.innerHTML = "";
+    preguntasSeleccionadas.forEach((preg, idx) => {
+      const div = document.createElement("div");
+      div.classList.add("pregunta");
+      div.innerHTML = `<strong>Pregunta ${idx+1}:</strong> ${preg.p}<br>
+        <label><input type="radio" name="p${idx}" value="A" required /> A) ${preg.o[0]}</label>
+        <label><input type="radio" name="p${idx}" value="B" /> B) ${preg.o[1]}</label>
+        <label><input type="radio" name="p${idx}" value="C" /> C) ${preg.o[2]}</label>
+      `;
+      contenedorPreguntas.appendChild(div);
+    });
+  }
+
+  // --- Eventos ---
+
+  btnInicio.addEventListener("click", () => mostrarSeccion(secciones.inicio));
+  btnAdmin.addEventListener("click", () => mostrarSeccion(secciones.admin));
+  btnReporte.addEventListener("click", () => mostrarSeccion(secciones.reporte));
+
+  btnIniciar.addEventListener("click", () => {
+    const doc = docInput.value.trim();
+    if(!doc){
+      alert("Por favor ingrese su número de documento.");
+      return;
+    }
+    // Verificar si ya hizo el cuestionario
+    const docsRealizados = cargarDocumentos();
+    if(docsRealizados.includes(doc)){
+      alert("Ya ha realizado el cuestionario con este documento.");
+      return;
+    }
+    documentoActual = doc;
+    preguntasSeleccionadas = elegirPreguntas();
+    mostrarPreguntas();
+    cuestionarioForm.classList.remove("hidden");
+    btnIniciar.disabled = true;
+    docInput.disabled = true;
+  });
+
+  cuestionarioForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const respuestasUsuario = [];
+    let puntaje = 0;
+    for(let i=0; i<5; i++){
+      const radios = document.getElementsByName(`p${i}`);
+      let resp = null;
+      for(const r of radios){
+        if(r.checked){
+          resp = r.value;
+          break;
+        }
+      }
+      respuestasUsuario.push(resp);
+      if(resp === preguntasSeleccionadas[i].c) puntaje++;
+    }
+    // Guardar resultado
+    const intentos = cargarIntentos();
+    intentos.push({nombre: "Desconocido", documento: documentoActual, puntaje});
+    guardarIntentos(intentos);
+
+    // Guardar documento para evitar repetir
+    let docsRealizados = cargarDocumentos();
+    docsRealizados.push(documentoActual);
+    guardarDocumentos(docsRealizados);
+
+    // Mostrar resultado
+    cuestionarioForm.classList.add("hidden");
+    btnIniciar.disabled = false;
+    docInput.disabled = false;
+    docInput.value = "";
+    documentoActual = "";
+
+    notaFinalP.textContent = `Obtuvo una nota de ${(puntaje).toFixed(1)} / 5.0`;
+    respuestasCorrectasDiv.innerHTML = "<h3>Respuestas correctas:</h3>";
+    preguntasSeleccionadas.forEach((preg, i) => {
+      respuestasCorrectasDiv.innerHTML += `<p><strong>Pregunta ${i+1}:</strong> ${preg.c}</p>`;
+    });
+    resultadoSection.classList.remove("hidden");
+  });
+
+  btnReiniciar.addEventListener("click", () => {
+    resultadoSection.classList.add("hidden");
+    mostrarSeccion(secciones.inicio);
+  });
+
+  // --- Administración ---
+  const ADMIN_PASS = "admin123";
+
+  btnVerificarAdmin.addEventListener("click", () => {
+    const pass = adminPasswordInput.value;
+    if(pass === ADMIN_PASS){
+      passwordPromptAdmin.classList.add("hidden");
+      adminPanel.classList.remove("hidden");
+      cargarAdminIntentos();
+    } else {
+      alert("Contraseña incorrecta");
+    }
+  });
+
+  btnCerrarAdmin.addEventListener("click", () => {
+    mostrarSeccion(secciones.inicio);
+  });
+
+  function cargarAdminIntentos() {
+    const intentos = cargarIntentos();
+    listaIntentos.innerHTML = "";
+    if(intentos.length === 0){
+      listaIntentos.innerHTML = "<li>No hay intentos registrados.</li>";
+      return;
+    }
+    intentos.forEach((intento, idx) => {
+      const li = document.createElement("li");
+      li.textContent = `Documento: ${intento.documento} - Nota: ${intento.puntaje} / 5.0`;
+      const btnEliminar = document.createElement("button");
+      btnEliminar.textContent = "Eliminar intento";
+      btnEliminar.style.marginLeft = "10px";
+      btnEliminar.addEventListener("click", () => {
+        if(confirm("¿Está seguro de eliminar este intento? Esto permitirá que el documento pueda volver a hacer el cuestionario.")){
+          eliminarIntento(idx);
+        }
+      });
+      li.appendChild(btnEliminar);
+      listaIntentos.appendChild(li);
+    });
+  }
+
+  function eliminarIntento(idx) {
+    const intentos = cargarIntentos();
+    const docs = cargarDocumentos();
+    if(intentos[idx]){
+      const docEliminar = intentos[idx].documento;
+      intentos.splice(idx,1);
+      guardarIntentos(intentos);
+      // Quitar documento de lista para permitir repetir
+      const pos = docs.indexOf(docEliminar);
+      if(pos > -1){
+        docs.splice(pos,1);
+        guardarDocumentos(docs);
+      }
+      cargarAdminIntentos();
+      alert("Intento eliminado.");
+    }
+  }
+
+  // --- Reporte ---
+  const REPORTE_PASS = "reporte123";
+
+  btnVerificarReporte.addEventListener("click", () => {
+    const pass = reportePasswordInput.value;
+    if(pass === REPORTE_PASS){
+      passwordPromptReporte.classList.add("hidden");
+      reporteResultados.classList.remove("hidden");
+      cargarReporte();
+    } else {
+      alert("Contraseña incorrecta");
+    }
+  });
+
+  btnCerrarReporte.addEventListener("click", () => {
+    mostrarSeccion(secciones.inicio);
+  });
+
+  function cargarReporte() {
+    const intentos = cargarIntentos();
+    listaReporte.innerHTML = "";
+    if(intentos.length === 0){
+      listaReporte.innerHTML = "<li>No hay resultados registrados.</li>";
+      return;
+    }
+    intentos.forEach((intento, idx) => {
+      const li = document.createElement("li");
+      li.textContent = `Documento: ${intento.documento} - Nota: ${intento.puntaje} / 5.0`;
+      listaReporte.appendChild(li);
+    });
+  }
+
+  // Al inicio mostrar Inicio
+  mostrarSeccion(secciones.inicio);
+
+})();
+	document.getElementById('quiz-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    const response = await fetch('https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzNLTjXkfB5f9pZ7mh-YHV1feuYRG5xPRlLWa83O2xuvCWHZoQqsMViydnUaW5BJKCYQg/exec/exec', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+      alert('¡Respuestas enviadas con éxito!');
+      e.target.reset();
+    } else {
+      alert('Hubo un error al enviar las respuestas.');
+    }
+  });
+
+</script>
+
+</body>
+</html>
